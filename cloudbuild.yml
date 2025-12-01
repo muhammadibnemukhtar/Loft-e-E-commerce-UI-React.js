@@ -1,0 +1,41 @@
+steps:
+  # Install dependencies & build React app
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🚀 Installing dependencies..."
+        npm ci
+        echo "📦 Building React project..."
+        npm run build
+
+  # Build Docker image (Dockerfile must exist in repo root)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$SHORT_SHA',
+        '.'
+      ]
+
+  # Push Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$SHORT_SHA'
+      ]
+
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Required for substitution variables
+substitutions:
+  _REGION: "us-central1"
+  _REPO_NAME: "Loft-e-E-commerce-UI-React.js"
+  _IMAGE_NAME: "app"
